@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Origen — Trazabilidad de café en Blockchain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.15.0/ethers.umd.min.js"></script>
+<style>
+  :root{
+    --coffee-950:#241610;
+    --coffee-900:#33221a;
+    --coffee-700:#5b4032;
+    --coffee-500:#8a6a55;
+    --terracotta:#b85042;
+    --terracotta-dark:#963f34;
+    --sage:#7f9d83;
+    --sage-dark:#5f7d63;
+    --sand:#f4ede2;
+    --sand-deep:#e9dfcd;
+    --cream:#fbf7ef;
+    --ok:#5f7d63;
+    --warn:#b85042;
+    --radius:14px;
+    --shadow: 0 6px 24px rgba(36,22,16,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--coffee-900);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces',serif;
+    letter-spacing:-0.01em;
+    color:var(--coffee-950);
+    margin:0;
+  }
+  code, .mono, input, select{ font-family:'JetBrains Mono', monospace; }
+  a{ color: var(--terracotta-dark); }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px;
+    background:var(--coffee-950);
+    color:var(--sand);
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .mark{
+    width:34px;height:34px;border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--terracotta), var(--coffee-700) 75%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; color:var(--sand); font-size:16px;
+  }
+  .brand .name{ font-family:'Fraunces',serif; font-size:19px; font-weight:600; color:var(--sand); }
+  .brand .tag{ font-size:11px; color:var(--sand-deep); opacity:.65; letter-spacing:.04em; text-transform:uppercase; }
+
+  .wallet-box{ display:flex; align-items:center; gap:10px; }
+  .pill{
+    padding:8px 14px; border-radius:999px; font-size:13px; font-weight:500;
+    background:rgba(244,237,226,0.08); color:var(--sand-deep); border:1px solid rgba(244,237,226,0.18);
+  }
+  .btn{
+    border:none; cursor:pointer; border-radius:10px; padding:10px 18px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-primary{ background:var(--terracotta); color:var(--cream); }
+  .btn-primary:hover:not(:disabled){ background:var(--terracotta-dark); }
+  .btn-ghost{ background:transparent; color:var(--sand); border:1px solid rgba(244,237,226,0.35); }
+  .btn-ghost:hover:not(:disabled){ background:rgba(244,237,226,0.1); }
+  .btn-sage{ background:var(--sage); color:var(--cream); }
+  .btn-sage:hover:not(:disabled){ background:var(--sage-dark); }
+  .btn-small{ padding:7px 12px; font-size:12.5px; border-radius:8px; }
+
+  .hero{
+    padding:64px 28px 40px; max-width:1180px; margin:0 auto;
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:48px; align-items:center;
+  }
+  .hero h1{ font-size:44px; line-height:1.08; font-weight:600; }
+  .hero h1 em{ font-style:italic; color:var(--terracotta); }
+  .hero p{ color:var(--coffee-700); font-size:16.5px; max-width:46ch; margin-top:16px; }
+  .hero-badges{ display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; }
+  .badge{
+    font-size:12.5px; padding:6px 12px; border-radius:999px; background:var(--sand-deep);
+    color:var(--coffee-700); border:1px solid #ddd0b8;
+  }
+
+  .route-art{
+    background:var(--sand); border-radius:20px; padding:28px; box-shadow:var(--shadow);
+    border:1px solid #e6d9c1;
+  }
+  .route-step{ display:flex; align-items:flex-start; gap:14px; padding:10px 0; position:relative; }
+  .route-step:not(:last-child)::after{
+    content:''; position:absolute; left:17px; top:38px; bottom:-4px; width:2px;
+    background:repeating-linear-gradient(to bottom, #c9b895 0 4px, transparent 4px 9px);
+  }
+  .route-dot{
+    width:36px;height:36px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--coffee-950); color:var(--sand); font-size:16px;
+  }
+  .route-step:nth-child(1) .route-dot{ background:var(--terracotta); }
+  .route-step:nth-child(2) .route-dot{ background:var(--coffee-700); }
+  .route-step:nth-child(3) .route-dot{ background:var(--coffee-500); }
+  .route-step:nth-child(4) .route-dot{ background:var(--sage-dark); }
+  .route-step .t{ font-weight:600; font-size:14.5px; color:var(--coffee-950); }
+  .route-step .d{ font-size:12.5px; color:var(--coffee-700); margin-top:2px; }
+
+  main{ max-width:1180px; margin:0 auto; padding:0 28px 80px; }
+
+  .section-label{
+    text-transform:uppercase; font-size:12px; letter-spacing:.09em; font-weight:700;
+    color:var(--terracotta-dark); margin-bottom:6px;
+  }
+  .section-title{ font-size:26px; margin-bottom:28px; }
+
+  .grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:22px; }
+  @media(max-width:880px){ .grid{ grid-template-columns:1fr; } .hero{ grid-template-columns:1fr; } }
+
+  .card{
+    background:#fff; border-radius:var(--radius); padding:24px;
+    border:1px solid #ece2cf; box-shadow:var(--shadow);
+  }
+  .card h3{ font-size:18px; margin-bottom:4px; }
+  .card .sub{ font-size:13px; color:var(--coffee-500); margin-bottom:18px; }
+  .card.wide{ grid-column: 1 / -1; }
+
+  .role-chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
+    padding:4px 10px; border-radius:999px; margin-left:8px; vertical-align:middle;
+  }
+  .role-chip.productor{ background:#f3e3d3; color:#8a4a1f; }
+  .role-chip.distribuidor{ background:#dde6e0; color:#3f5c46; }
+  .role-chip.minorista{ background:#e6dced; color:#5a3f7d; }
+  .role-chip.oraculo{ background:#dcebe9; color:#1f6b63; }
+  .role-chip.admin{ background:#f6d9d4; color:#963f34; }
+
+  label{ display:block; font-size:12.5px; font-weight:600; color:var(--coffee-700); margin:14px 0 6px; }
+  label:first-of-type{ margin-top:0; }
+  input, select{
+    width:100%; padding:10px 12px; border-radius:9px; border:1px solid #ddd0b8;
+    font-size:13.5px; background:var(--cream); color:var(--coffee-950);
+  }
+  input:focus, select:focus{ outline:2px solid var(--terracotta); outline-offset:1px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .status-line{
+    margin-top:14px; font-size:12.5px; padding:10px 12px; border-radius:8px; display:none;
+  }
+  .status-line.show{ display:block; }
+  .status-line.ok{ background:#e9f1ea; color:var(--sage-dark); }
+  .status-line.err{ background:#fbe9e6; color:var(--terracotta-dark); }
+  .status-line.pending{ background:#f4ede2; color:var(--coffee-700); }
+
+  .helptext{ font-size:12px; color:var(--coffee-500); margin-top:6px; line-height:1.5; }
+  .sig-box{
+    margin-top:10px; padding:10px; background:var(--sand); border-radius:8px;
+    font-size:11.5px; word-break:break-all; color:var(--coffee-700); border:1px dashed #d8c7a4;
+    min-height:20px;
+  }
+
+  .stepper{ display:flex; gap:6px; margin:18px 0 22px; }
+  .stepper .step{
+    flex:1; text-align:center; padding:10px 6px; border-radius:8px; font-size:12px; font-weight:600;
+    background:var(--sand); color:var(--coffee-500); border:1px solid #e6d9c1;
+  }
+  .stepper .step.active{ background:var(--terracotta); color:var(--cream); border-color:var(--terracotta); }
+  .stepper .step.done{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+  th,td{ text-align:left; padding:9px 10px; border-bottom:1px solid #ece2cf; }
+  th{ color:var(--coffee-500); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .tag-ok{ color:var(--sage-dark); font-weight:600; }
+  .tag-bad{ color:var(--terracotta-dark); font-weight:600; }
+
+  .config-toggle{
+    font-size:12.5px; color:var(--coffee-500); cursor:pointer; text-decoration:underline;
+    background:none; border:none; padding:0; margin-top:10px;
+  }
+  #adminPanel{ display:none; }
+  #configPanel{ display:none; }
+
+  footer{
+    padding:36px 28px 60px; max-width:1180px; margin:0 auto; color:var(--coffee-500); font-size:12.5px;
+    border-top:1px solid #e6d9c1; margin-top:30px;
+  }
+  .empty{ color:var(--coffee-500); font-size:13px; font-style:italic; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="mark">O</div>
+    <div>
+      <div class="name">Origen</div>
+      <div class="tag">Trazabilidad cafetera on-chain</div>
+    </div>
+  </div>
+  <div class="wallet-box">
+    <span class="pill" id="networkPill">sin conexión</span>
+    <span class="pill" id="accountPill" style="display:none;"></span>
+    <button class="btn btn-primary" id="connectBtn">Conectar wallet</button>
+  </div>
+</div>
+
+<section class="hero">
+  <div>
+    <div class="section-label">EFT · BCY0010 · Fundamentos de Blockchain</div>
+    <h1>De la finca a la taza,<br><em>sin perder el rastro.</em></h1>
+    <p>Cada lote de café de origen queda representado por un certificado digital (NFT) que acompaña su recorrido físico: cosecha, transporte y venta quedan registrados de forma inmutable, con checkpoints de temperatura reportados por sensores IoT a través de un oráculo.</p>
+    <div class="hero-badges">
+      <span class="badge">ERC-721 · certificado por lote</span>
+      <span class="badge">Firma digital ECDSA en cada traspaso</span>
+      <span class="badge">Oráculo IoT · cadena de frío</span>
+      <span class="badge">Roles on-chain (AccessControl)</span>
+    </div>
+  </div>
+  <div class="route-art">
+    <div class="route-step"><div class="route-dot">1</div><div><div class="t">Productor cosecha el lote</div><div class="d">Se acuña el certificado NFT del lote</div></div></div>
+    <div class="route-step"><div class="route-dot">2</div><div><div class="t">Distribuidor transporta</div><div class="d">Sensores IoT reportan temperatura/humedad</div></div></div>
+    <div class="route-step"><div class="route-dot">3</div><div><div class="t">Minorista recibe</div><div class="d">Custodia y checkpoints quedan en cadena</div></div></div>
+    <div class="route-step"><div class="route-dot">4</div><div><div class="t">Consumidor verifica</div><div class="d">Cualquiera puede auditar el historial completo</div></div></div>
+  </div>
+</section>
+
+<main>
+
+  <button class="config-toggle" id="toggleConfig">⚙ Configurar direcciones de contrato desplegado</button>
+  <div id="configPanel" class="card" style="margin:14px 0 30px;">
+    <h3>Configuración de red</h3>
+    <div class="sub">Pega aquí las direcciones que obtengas al desplegar los contratos (ver README). Se guardan solo en este navegador.</div>
+    <div class="row2">
+      <div>
+        <label>Dirección — SupplyChainTraceability</label>
+        <input id="cfgTraz" placeholder="0x...">
+      </div>
+      <div>
+        <label>Dirección — IoTOracle</label>
+        <input id="cfgOraculo" placeholder="0x...">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-small" id="saveConfig" style="margin-top:14px;">Guardar configuración</button>
+    <div class="helptext">Mientras no se configuren, la interfaz funciona en <b>modo demo</b> (sin enviar transacciones reales) para que puedas explorar el flujo.</div>
+  </div>
+
+  <div class="section-label">Panel de participantes</div>
+  <div class="section-title">Acciones según tu rol <span id="myRoles"></span></div>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>1 · Registrar lote <span class="role-chip productor">Productor</span></h3>
+      <div class="sub">Acuña el certificado NFT del lote y fija su estado inicial en "Creado".</div>
+      <label>Nombre del producto</label>
+      <input id="regNombre" placeholder="Café Arábica - Finca Los Robles">
+      <label>Origen</label>
+      <input id="regOrigen" placeholder="Región del Biobío, Chile">
+      <label>Fecha de cosecha</label>
+      <input id="regFecha" type="date">
+      <button class="btn btn-primary" id="btnRegistrar" style="margin-top:16px;">Registrar lote</button>
+      <div class="status-line" id="statusRegistrar"></div>
+    </div>
+
+    <div class="card">
+      <h3>2 · Firmar aceptación <span class="role-chip distribuidor">Distribuidor</span><span class="role-chip minorista">Minorista</span></h3>
+      <div class="sub">El receptor firma localmente (como MetaMask) que acepta recibir el lote. Copia la firma y entrégasela a quien tiene la custodia actual.</div>
+      <label>ID del lote (tokenId)</label>
+      <input id="firmaTokenId" type="number" min="0" placeholder="0">
+      <button class="btn btn-sage" id="btnFirmar" style="margin-top:10px;">Firmar aceptación con mi wallet</button>
+      <div class="sig-box" id="firmaResultado">Tu firma aparecerá aquí…</div>
+      <div class="status-line" id="statusFirmar"></div>
+    </div>
+
+    <div class="card">
+      <h3>3 · Transferir custodia <span class="role-chip productor">Productor</span><span class="role-chip distribuidor">Distribuidor</span></h3>
+      <div class="sub">Quien tiene la custodia actual ejecuta el traspaso, adjuntando la firma del receptor.</div>
+      <label>ID del lote</label>
+      <input id="trTokenId" type="number" min="0" placeholder="0">
+      <label>Dirección del receptor</label>
+      <input id="trReceptor" placeholder="0x...">
+      <label>Firma del receptor</label>
+      <input id="trFirma" placeholder="0x...">
+      <button class="btn btn-primary" id="btnTransferir" style="margin-top:16px;">Transferir custodia</button>
+      <div class="status-line" id="statusTransferir"></div>
+    </div>
+
+    <div class="card">
+      <h3>4 · Publicar lectura de sensor <span class="role-chip oraculo">Nodo IoT</span></h3>
+      <div class="sub">Simula el reporte de un sensor de temperatura/humedad del contenedor hacia el oráculo.</div>
+      <label>ID del lote</label>
+      <input id="oraTokenId" type="number" min="0" placeholder="0">
+      <div class="row2">
+        <div>
+          <label>Temperatura (°C)</label>
+          <input id="oraTemp" type="number" step="0.1" placeholder="4.5">
+        </div>
+        <div>
+          <label>Humedad relativa (%)</label>
+          <input id="oraHum" type="number" step="0.1" placeholder="60">
+        </div>
+      </div>
+      <div class="helptext">Rango seguro configurado en el contrato: 2.0 °C – 8.0 °C.</div>
+      <button class="btn btn-primary" id="btnOraculo" style="margin-top:14px;">Publicar lectura</button>
+      <div class="status-line" id="statusOraculo"></div>
+    </div>
+
+    <div class="card wide">
+      <h3>5 · Verificar trazabilidad de un lote</h3>
+      <div class="sub">Cualquier persona —incluido el consumidor final— puede consultar el historial completo escaneando el ID del lote (ej. desde un QR en el empaque).</div>
+      <div class="row2" style="max-width:420px;">
+        <div>
+          <label>ID del lote</label>
+          <input id="verTokenId" type="number" min="0" placeholder="0">
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button class="btn btn-primary" id="btnVerificar" style="width:100%;">Verificar</button>
+        </div>
+      </div>
+      <div id="verificarResultado" style="margin-top:22px;"></div>
+    </div>
+
+    <div class="card wide" id="adminCard">
+      <h3>Panel de administración <span class="role-chip admin">Admin del despliegue</span></h3>
+      <div class="sub">Solo la cuenta que desplegó el contrato puede dar de alta a los demás participantes de la cadena.</div>
+      <div id="adminPanel">
+        <div class="row2">
+          <div>
+            <label>Dirección a registrar</label>
+            <input id="adminAddr" placeholder="0x...">
+          </div>
+          <div>
+            <label>Rol</label>
+            <select id="adminRol">
+              <option value="productor">Productor</option>
+              <option value="distribuidor">Distribuidor</option>
+              <option value="minorista">Minorista</option>
+              <option value="oraculoContrato">Contrato IoTOracle (habilita ORACLE_ROLE)</option>
+              <option value="nodoIoT">Nodo IoT autorizado (en el contrato Oráculo)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-small" id="btnAdminRegistrar" style="margin-top:14px;">Dar de alta</button>
+        <div class="status-line" id="statusAdmin"></div>
+      </div>
+      <div class="empty" id="adminEmpty">Conecta la wallet que desplegó los contratos para ver este panel.</div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  Proyecto académico — EFT Fundamentos de Blockchain (BCY0010). Contratos: <code>SupplyChainTraceability.sol</code> (ERC-721 + AccessControl) e <code>IoTOracle.sol</code>. Ver <code>README.md</code> del repositorio para instrucciones de despliegue en la testnet Sepolia.
+</footer>
+
+<script>
+const ABI_TRAZABILIDAD = [
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AccessControlBadConfirmation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "neededRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "AccessControlUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ECDSAInvalidSignature",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureLength",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "s",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureS",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "ERC721IncorrectOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "ERC721InsufficientApproval",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "approver",
+        "type": "address"
+      }
+    ],
+    "name": "ERC721InvalidApprover",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "ERC721InvalidOperator",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "ERC721InvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      }
+    ],
+    "name": "ERC721InvalidReceiver",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "ERC721InvalidSender",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "ERC721NonexistentToken",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "approved",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
+      }
+    ],
+    "name": "ApprovalForAll",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "int256",
+        "name": "temperaturaX10",
+        "type": "int256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "humedadX10",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "dentroDeRango",
+        "type": "bool"
+      }
+    ],
+    "name": "CheckpointRegistrado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "desde",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "hacia",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum SupplyChainTraceability.EstadoLote",
+        "name": "nuevoEstado",
+        "type": "uint8"
+      }
+    ],
+    "name": "CustodiaTransferida",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "minorista",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "condicionesRespetadas",
+        "type": "bool"
+      }
+    ],
+    "name": "LoteEntregado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "productor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "nombreProducto",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "origen",
+        "type": "string"
+      }
+    ],
+    "name": "LoteRegistrado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "Transfer",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "DISTRIBUIDOR_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MINORISTA_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ORACLE_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PRODUCTOR_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "TEMP_MAX",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "TEMP_MIN",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approve",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "confirmarEntregaFinal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getApproved",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRoleAdmin",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "grantRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "hasRole",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "historialCalidad",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "temperaturaCelsiusX10",
+        "type": "int256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "humedadPorcentajeX10",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "reportadoPor",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "historialCustodia",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "isApprovedForAll",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "lotes",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "nombreProducto",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "origen",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fechaCosecha",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum SupplyChainTraceability.EstadoLote",
+        "name": "estado",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "productor",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "distribuidorActual",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "minoristaActual",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "condicionesRespetadas",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "name",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "nonces",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "ownerOf",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "int256",
+        "name": "temperaturaCelsiusX10",
+        "type": "int256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "humedadPorcentajeX10",
+        "type": "uint256"
+      }
+    ],
+    "name": "registrarCheckpoint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "cuenta",
+        "type": "address"
+      }
+    ],
+    "name": "registrarDistribuidor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "nombreProducto",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "origen",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fechaCosecha",
+        "type": "uint256"
+      }
+    ],
+    "name": "registrarLote",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "cuenta",
+        "type": "address"
+      }
+    ],
+    "name": "registrarMinorista",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "cuenta",
+        "type": "address"
+      }
+    ],
+    "name": "registrarOraculo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "cuenta",
+        "type": "address"
+      }
+    ],
+    "name": "registrarProductor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "callerConfirmation",
+        "type": "address"
+      }
+    ],
+    "name": "renounceRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "safeTransferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "safeTransferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
+      }
+    ],
+    "name": "setApprovalForAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "supportsInterface",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "tokenURI",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalLotes",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "transferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "receptor",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "firmaReceptor",
+        "type": "bytes"
+      }
+    ],
+    "name": "transferirCustodia",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "verificarLote",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "nombreProducto",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "origen",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fechaCosecha",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum SupplyChainTraceability.EstadoLote",
+            "name": "estado",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "productor",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "distribuidorActual",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "minoristaActual",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "condicionesRespetadas",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct SupplyChainTraceability.Lote",
+        "name": "datosLote",
+        "type": "tuple"
+      },
+      {
+        "internalType": "address[]",
+        "name": "custodios",
+        "type": "address[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "int256",
+            "name": "temperaturaCelsiusX10",
+            "type": "int256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "humedadPorcentajeX10",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "reportadoPor",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct SupplyChainTraceability.CheckpointCalidad[]",
+        "name": "checkpoints",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+const ABI_ORACULO = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "direccionContratoTrazabilidad",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "int256",
+        "name": "temperaturaX10",
+        "type": "int256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "humedadX10",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "nodo",
+        "type": "address"
+      }
+    ],
+    "name": "LecturaSensorPublicada",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "nodo",
+        "type": "address"
+      }
+    ],
+    "name": "NodoOraculoAutorizado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "nodo",
+        "type": "address"
+      }
+    ],
+    "name": "NodoOraculoRevocado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "nodo",
+        "type": "address"
+      }
+    ],
+    "name": "autorizarNodo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "contratoTrazabilidad",
+    "outputs": [
+      {
+        "internalType": "contract ISupplyChainTraceability",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "nodosAutorizados",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "int256",
+        "name": "temperaturaCelsiusX10",
+        "type": "int256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "humedadPorcentajeX10",
+        "type": "uint256"
+      }
+    ],
+    "name": "publicarLectura",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "nodo",
+        "type": "address"
+      }
+    ],
+    "name": "revocarNodo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
+
+const ESTADOS = ["Creado", "En tránsito (Distribuidor)", "En bodega (Minorista)", "Entregado"];
+const ROLE_KECCAK = {
+  PRODUCTOR_ROLE: ethers.id("PRODUCTOR_ROLE"),
+  DISTRIBUIDOR_ROLE: ethers.id("DISTRIBUIDOR_ROLE"),
+  MINORISTA_ROLE: ethers.id("MINORISTA_ROLE"),
+  ORACLE_ROLE: ethers.id("ORACLE_ROLE"),
+  DEFAULT_ADMIN_ROLE: "0x0000000000000000000000000000000000000000000000000000000000000000".slice(0,66)
+};
+// DEFAULT_ADMIN_ROLE es bytes32(0)
+ROLE_KECCAK.DEFAULT_ADMIN_ROLE = "0x" + "0".repeat(64);
+
+let provider, signer, account;
+let trazContract, oracleContract, oracleAddress, trazAddress;
+let demoMode = true;
+
+function loadConfig(){
+  trazAddress = localStorage.getItem("origen_traz_addr") || "";
+  oracleAddress = localStorage.getItem("origen_oracle_addr") || "";
+  document.getElementById("cfgTraz").value = trazAddress;
+  document.getElementById("cfgOraculo").value = oracleAddress;
+  demoMode = !(trazAddress && oracleAddress);
+}
+loadConfig();
+
+document.getElementById("toggleConfig").onclick = () => {
+  const p = document.getElementById("configPanel");
+  p.style.display = p.style.display === "block" ? "none" : "block";
+};
+document.getElementById("saveConfig").onclick = () => {
+  trazAddress = document.getElementById("cfgTraz").value.trim();
+  oracleAddress = document.getElementById("cfgOraculo").value.trim();
+  localStorage.setItem("origen_traz_addr", trazAddress);
+  localStorage.setItem("origen_oracle_addr", oracleAddress);
+  demoMode = !(trazAddress && oracleAddress);
+  initContracts();
+  alert(demoMode ? "Guardado. Aún falta alguna dirección: sigues en modo demo." : "Direcciones guardadas. Conectado a los contratos reales.");
+};
+
+function initContracts(){
+  if (!signer || !trazAddress || !oracleAddress) return;
+  trazContract = new ethers.Contract(trazAddress, ABI_TRAZABILIDAD, signer);
+  oracleContract = new ethers.Contract(oracleAddress, ABI_ORACULO, signer);
+}
+
+function setStatus(elId, type, msg){
+  const el = document.getElementById(elId);
+  el.className = "status-line show " + type;
+  el.textContent = msg;
+}
+
+async function connectWallet(){
+  if (!window.ethereum){
+    alert("No se detectó una wallet (ej. MetaMask). Instálala para usar la DApp con una red real; mientras tanto puedes explorar el modo demo.");
+    return;
+  }
+  provider = new ethers.BrowserProvider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = await provider.getSigner();
+  account = await signer.getAddress();
+  const network = await provider.getNetwork();
+
+  document.getElementById("accountPill").style.display = "inline-block";
+  document.getElementById("accountPill").textContent = account.slice(0,6) + "…" + account.slice(-4);
+  document.getElementById("networkPill").textContent = network.name === "unknown" ? ("chainId " + network.chainId) : network.name;
+  document.getElementById("connectBtn").textContent = "Wallet conectada";
+  document.getElementById("connectBtn").disabled = true;
+
+  initContracts();
+  await refreshRoles();
+}
+document.getElementById("connectBtn").onclick = connectWallet;
+
+async function refreshRoles(){
+  const rolesLabel = document.getElementById("myRoles");
+  if (demoMode || !trazContract){
+    rolesLabel.innerHTML = '<span class="role-chip admin">modo demo</span>';
+    document.getElementById("adminEmpty").style.display="block";
+    document.getElementById("adminPanel").style.display="none";
+    return;
+  }
+  try {
+    const [isProd, isDist, isMin, isAdmin] = await Promise.all([
+      trazContract.hasRole(ROLE_KECCAK.PRODUCTOR_ROLE, account),
+      trazContract.hasRole(ROLE_KECCAK.DISTRIBUIDOR_ROLE, account),
+      trazContract.hasRole(ROLE_KECCAK.MINORISTA_ROLE, account),
+      trazContract.hasRole(ROLE_KECCAK.DEFAULT_ADMIN_ROLE, account),
+    ]);
+    let html = "";
+    if (isProd) html += '<span class="role-chip productor">Productor</span>';
+    if (isDist) html += '<span class="role-chip distribuidor">Distribuidor</span>';
+    if (isMin) html += '<span class="role-chip minorista">Minorista</span>';
+    if (isAdmin) html += '<span class="role-chip admin">Admin</span>';
+    rolesLabel.innerHTML = html || '<span class="role-chip oraculo">sin rol asignado aún</span>';
+
+    document.getElementById("adminEmpty").style.display = isAdmin ? "none" : "block";
+    document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
+  } catch(e){ console.warn(e); }
+}
+
+// ---------- 1) Registrar lote ----------
+document.getElementById("btnRegistrar").onclick = async () => {
+  const nombre = document.getElementById("regNombre").value.trim();
+  const origen = document.getElementById("regOrigen").value.trim();
+  const fecha = document.getElementById("regFecha").value;
+  if (!nombre || !origen || !fecha){ setStatus("statusRegistrar","err","Completa nombre, origen y fecha."); return; }
+  const ts = Math.floor(new Date(fecha).getTime()/1000);
+
+  if (demoMode){
+    setStatus("statusRegistrar","ok", `[DEMO] Se acuñaría el lote "${nombre}" (origen: ${origen}) con fecha ${fecha}. Configura las direcciones de contrato para enviar una transacción real.`);
+    return;
+  }
+  try{
+    setStatus("statusRegistrar","pending","Confirmando en tu wallet…");
+    const tx = await trazContract.registrarLote(nombre, origen, ts);
+    setStatus("statusRegistrar","pending","Transacción enviada, esperando confirmación…");
+    await tx.wait();
+    setStatus("statusRegistrar","ok","Lote registrado y certificado NFT emitido. Revisa el ID en 'Verificar trazabilidad'.");
+  }catch(e){ setStatus("statusRegistrar","err", parseErr(e)); }
+};
+
+// ---------- 2) Firmar aceptación (receptor) ----------
+document.getElementById("btnFirmar").onclick = async () => {
+  const tokenId = document.getElementById("firmaTokenId").value;
+  if (tokenId === "" || !signer){ setStatus("statusFirmar","err","Conecta tu wallet e indica el ID del lote."); return; }
+
+  if (demoMode){
+    setStatus("statusFirmar","ok","[DEMO] En la red real, aquí se te pediría firmar un mensaje con tu wallet (sin gas) confirmando que aceptas la custodia del lote.");
+    document.getElementById("firmaResultado").textContent = "0xFIRMA_SIMULADA_" + tokenId;
+    return;
+  }
+  try{
+    setStatus("statusFirmar","pending","Calculando nonce y solicitando firma…");
+    const nonce = await trazContract.nonces(account);
+    const hash = ethers.solidityPackedKeccak256(
+      ["uint256","address","uint256","address"],
+      [tokenId, account, nonce, trazAddress]
+    );
+    const firma = await signer.signMessage(ethers.getBytes(hash));
+    document.getElementById("firmaResultado").textContent = firma;
+    setStatus("statusFirmar","ok","Firma generada. Compártela con quien tiene la custodia actual del lote.");
+  }catch(e){ setStatus("statusFirmar","err", parseErr(e)); }
+};
+
+// ---------- 3) Transferir custodia ----------
+document.getElementById("btnTransferir").onclick = async () => {
+  const tokenId = document.getElementById("trTokenId").value;
+  const receptor = document.getElementById("trReceptor").value.trim();
+  const firma = document.getElementById("trFirma").value.trim();
+  if (tokenId === "" || !receptor || !firma){ setStatus("statusTransferir","err","Completa lote, receptor y firma."); return; }
+
+  if (demoMode){
+    setStatus("statusTransferir","ok", `[DEMO] Se transferiría la custodia del lote #${tokenId} a ${receptor.slice(0,10)}…`);
+    return;
+  }
+  try{
+    setStatus("statusTransferir","pending","Confirmando en tu wallet…");
+    const tx = await trazContract.transferirCustodia(tokenId, receptor, firma);
+    setStatus("statusTransferir","pending","Transacción enviada, esperando confirmación…");
+    await tx.wait();
+    setStatus("statusTransferir","ok","Custodia transferida correctamente.");
+  }catch(e){ setStatus("statusTransferir","err", parseErr(e)); }
+};
+
+// ---------- 4) Publicar lectura de sensor ----------
+document.getElementById("btnOraculo").onclick = async () => {
+  const tokenId = document.getElementById("oraTokenId").value;
+  const temp = parseFloat(document.getElementById("oraTemp").value);
+  const hum = parseFloat(document.getElementById("oraHum").value);
+  if (tokenId === "" || isNaN(temp) || isNaN(hum)){ setStatus("statusOraculo","err","Completa lote, temperatura y humedad."); return; }
+  const tempX10 = Math.round(temp*10);
+  const humX10 = Math.round(hum*10);
+
+  if (demoMode){
+    const dentro = tempX10 >= 20 && tempX10 <= 80;
+    setStatus("statusOraculo", dentro ? "ok":"err", `[DEMO] Lectura ${temp}°C / ${hum}% ${dentro ? "dentro" : "FUERA"} del rango seguro de cadena de frío.`);
+    return;
+  }
+  try{
+    setStatus("statusOraculo","pending","Publicando lectura vía el nodo oráculo…");
+    const tx = await oracleContract.publicarLectura(tokenId, tempX10, humX10);
+    await tx.wait();
+    setStatus("statusOraculo","ok","Lectura publicada en el contrato de trazabilidad.");
+  }catch(e){ setStatus("statusOraculo","err", parseErr(e)); }
+};
+
+// ---------- 5) Verificar lote ----------
+document.getElementById("btnVerificar").onclick = async () => {
+  const tokenId = document.getElementById("verTokenId").value;
+  const out = document.getElementById("verificarResultado");
+  if (tokenId === ""){ out.innerHTML = '<div class="empty">Ingresa un ID de lote.</div>'; return; }
+
+  if (demoMode){
+    out.innerHTML = renderDemoLote(tokenId);
+    return;
+  }
+  try{
+    out.innerHTML = '<div class="empty">Consultando…</div>';
+    const readOnly = trazContract.connect(provider);
+    const [datosLote, custodios, checkpoints] = await readOnly.verificarLote(tokenId);
+    out.innerHTML = renderLote(tokenId, datosLote, custodios, checkpoints);
+  }catch(e){ out.innerHTML = '<div class="empty">No se encontró el lote #' + tokenId + ' (' + parseErr(e) + ')</div>'; }
+};
+
+function stepperHtml(estadoIdx){
+  return '<div class="stepper">' + ESTADOS.map((e,i) => {
+    const cls = i < estadoIdx ? "done" : (i === estadoIdx ? "active" : "");
+    return `<div class="step ${cls}">${e}</div>`;
+  }).join("") + '</div>';
+}
+
+function renderLote(tokenId, lote, custodios, checkpoints){
+  const estadoIdx = Number(lote.estado);
+  const fecha = new Date(Number(lote.fechaCosecha)*1000).toLocaleDateString('es-CL');
+  let html = `<h3 style="margin-bottom:2px;">Lote #${tokenId} — ${lote.nombreProducto}</h3>`;
+  html += `<div class="sub">Origen: ${lote.origen} · Cosecha: ${fecha}</div>`;
+  html += stepperHtml(estadoIdx);
+  html += `<div style="margin-bottom:14px;">Cadena de frío: ${lote.condicionesRespetadas ? '<span class="tag-ok">respetada en todo el trayecto</span>' : '<span class="tag-bad">se detectó una ruptura</span>'}</div>`;
+
+  html += '<table><thead><tr><th>#</th><th>Custodio</th></tr></thead><tbody>';
+  custodios.forEach((c,i) => { html += `<tr><td>${i+1}</td><td>${c}</td></tr>`; });
+  html += '</tbody></table>';
+
+  html += '<h3 style="margin-top:20px; font-size:15px;">Checkpoints del oráculo IoT</h3>';
+  if (checkpoints.length === 0){
+    html += '<div class="empty">Sin lecturas registradas todavía.</div>';
+  } else {
+    html += '<table><thead><tr><th>Fecha</th><th>Temp.</th><th>Humedad</th><th>Estado</th></tr></thead><tbody>';
+    checkpoints.forEach(cp => {
+      const t = (Number(cp.temperaturaCelsiusX10)/10).toFixed(1);
+      const h = (Number(cp.humedadPorcentajeX10)/10).toFixed(1);
+      const ok = Number(cp.temperaturaCelsiusX10) >= 20 && Number(cp.temperaturaCelsiusX10) <= 80;
+      const f = new Date(Number(cp.timestamp)*1000).toLocaleString('es-CL');
+      html += `<tr><td>${f}</td><td>${t} °C</td><td>${h}%</td><td>${ok ? '<span class="tag-ok">OK</span>' : '<span class="tag-bad">Fuera de rango</span>'}</td></tr>`;
+    });
+    html += '</tbody></table>';
+  }
+  return html;
+}
+
+function renderDemoLote(tokenId){
+  return `<h3 style="margin-bottom:2px;">Lote #${tokenId} — Café Arábica (demo)</h3>
+  <div class="sub">Origen: Región del Biobío, Chile · Cosecha: 01-01-2026</div>
+  ${stepperHtml(1)}
+  <div style="margin-bottom:14px;">Cadena de frío: <span class="tag-ok">respetada en todo el trayecto</span></div>
+  <div class="empty">Este es un lote de ejemplo. Configura las direcciones de contrato para consultar datos reales de la blockchain.</div>`;
+}
+
+// ---------- Panel admin ----------
+document.getElementById("btnAdminRegistrar").onclick = async () => {
+  const addr = document.getElementById("adminAddr").value.trim();
+  const rol = document.getElementById("adminRol").value;
+  if (!addr){ setStatus("statusAdmin","err","Ingresa una dirección."); return; }
+  try{
+    setStatus("statusAdmin","pending","Confirmando en tu wallet…");
+    let tx;
+    if (rol === "productor") tx = await trazContract.registrarProductor(addr);
+    else if (rol === "distribuidor") tx = await trazContract.registrarDistribuidor(addr);
+    else if (rol === "minorista") tx = await trazContract.registrarMinorista(addr);
+    else if (rol === "oraculoContrato") tx = await trazContract.registrarOraculo(addr);
+    else if (rol === "nodoIoT") tx = await oracleContract.autorizarNodo(addr);
+    await tx.wait();
+    setStatus("statusAdmin","ok","Rol asignado correctamente.");
+  }catch(e){ setStatus("statusAdmin","err", parseErr(e)); }
+};
+
+function parseErr(e){
+  const msg = e?.reason || e?.shortMessage || e?.message || String(e);
+  return msg.length > 160 ? msg.slice(0,160) + "…" : msg;
+}
+</script>
+</body>
+</html>

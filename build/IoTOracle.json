@@ -1,0 +1,229 @@
+{
+  "contractName": "IoTOracle",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "direccionContratoTrazabilidad",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableInvalidOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "temperaturaX10",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "humedadX10",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "nodo",
+          "type": "address"
+        }
+      ],
+      "name": "LecturaSensorPublicada",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "nodo",
+          "type": "address"
+        }
+      ],
+      "name": "NodoOraculoAutorizado",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "nodo",
+          "type": "address"
+        }
+      ],
+      "name": "NodoOraculoRevocado",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nodo",
+          "type": "address"
+        }
+      ],
+      "name": "autorizarNodo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "contratoTrazabilidad",
+      "outputs": [
+        {
+          "internalType": "contract ISupplyChainTraceability",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "nodosAutorizados",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "temperaturaCelsiusX10",
+          "type": "int256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "humedadPorcentajeX10",
+          "type": "uint256"
+        }
+      ],
+      "name": "publicarLectura",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nodo",
+          "type": "address"
+        }
+      ],
+      "name": "revocarNodo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60a060405234801561000f575f80fd5b5060405161058f38038061058f83398101604081905261002e916100bd565b338061005357604051631e4fbdf760e01b81525f600482015260240160405180910390fd5b61005c8161006e565b506001600160a01b03166080526100ea565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f602082840312156100cd575f80fd5b81516001600160a01b03811681146100e3575f80fd5b9392505050565b6080516104866101095f395f818161013f015261025101526104865ff3fe608060405234801561000f575f80fd5b5060043610610085575f3560e01c8063b24ac09911610058578063b24ac09914610101578063c35469f914610114578063f2fde38b14610127578063fc5ec5a81461013a575f80fd5b8063093efffe146100895780632a881125146100c0578063715018a6146100d55780638da5cb5b146100dd575b5f80fd5b6100ab6100973660046103fa565b60016020525f908152604090205460ff1681565b60405190151581526020015b60405180910390f35b6100d36100ce3660046103fa565b610161565b005b6100d36101b7565b5f546001600160a01b03165b6040516001600160a01b0390911681526020016100b7565b6100d361010f366004610427565b6101ca565b6100d36101223660046103fa565b6102f2565b6100d36101353660046103fa565b610342565b6100e97f000000000000000000000000000000000000000000000000000000000000000081565b61016961037f565b6001600160a01b0381165f818152600160208190526040808320805460ff1916909217909155517fc8115836ee82f6fe4ec4d390d653a45bff7ab25ad19fedc2445a5a0ea32abde29190a250565b6101bf61037f565b6101c85f6103ab565b565b335f9081526001602052604090205460ff1661022d5760405162461bcd60e51b815260206004820152601a60248201527f4e6f646f206f726163756c6f206e6f206175746f72697a61646f00000000000060448201526064015b60405180910390fd5b60405163d4d7459160e01b81526004810184905260248101839052604481018290527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063d4d74591906064015f604051808303815f87803b15801561029a575f80fd5b505af11580156102ac573d5f803e3d5ffd5b505060408051858152602081018590523393508692507f9166935d9e58baf653bd60cf5aa40e8786e70a4236c4a510663b303e80d7adea910160405180910390a3505050565b6102fa61037f565b6001600160a01b0381165f81815260016020526040808220805460ff19169055517ffcb75cf9720867a71315d176b5b77603411749014b1a276e5a4bb1bc5c4c4a509190a250565b61034a61037f565b6001600160a01b03811661037357604051631e4fbdf760e01b81525f6004820152602401610224565b61037c816103ab565b50565b5f546001600160a01b031633146101c85760405163118cdaa760e01b8152336004820152602401610224565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f6020828403121561040a575f80fd5b81356001600160a01b0381168114610420575f80fd5b9392505050565b5f805f60608486031215610439575f80fd5b50508135936020830135935060409092013591905056fea26469706673582212209dfb5c734d3fdadf8c1ebbd6119c29fa8463c2d85b45185af1f223af1782db8464736f6c63430008180033"
+}

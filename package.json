@@ -1,0 +1,26 @@
+{
+  "name": "origen-trazabilidad-cafe",
+  "version": "1.0.0",
+  "description": "DApp de trazabilidad de cafe de origen sobre blockchain (EFT BCY0010)",
+  "main": "compile.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "compile": "node compile.js",
+    "test": "mocha test/ --timeout 60000"
+  },
+  "keywords": ["blockchain", "solidity", "supply-chain", "traceability"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1"
+  },
+  "devDependencies": {
+    "chai": "^6.2.2",
+    "ethers": "^6.17.0",
+    "ganache": "^7.9.2",
+    "mocha": "^11.7.6",
+    "solc": "^0.8.24"
+  }
+}
